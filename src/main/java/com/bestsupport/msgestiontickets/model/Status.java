@@ -1,0 +1,5 @@
+package com.bestsupport.msgestiontickets.model;
+
+public enum Status {
+    ABIERTO, CERRADO, EN_PROGRESO, PENDIENTE, RECHAZADO, RESUELTO, ESPERANDO_RESPUESTA_CLIENTE, ESPERANDO_RESPUESTA_TECNICO
+}

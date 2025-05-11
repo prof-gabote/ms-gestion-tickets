@@ -1,0 +1,25 @@
+spring.application.name=ms-gestion-tickets
+
+server.port=8081
+
+spring.output.ansi.enabled=ALWAYS
+
+logging.level.root=INFO
+logging.level.org.springframework.web=DEBUG
+logging.pattern.console=%d{yyyy-MM-dd HH:mm:ss} - %msg%n
+
+logging.level.org.hibernate=INFO
+logging.level.com.zaxxer.hikari=INFO
+logging.level.java.sql=INFO
+
+DB_URL=jdbc:oracle:thin:@NOMBRE-DE-LA-BD-EN-EL-TNS.ORA_high?TNS_ADMIN=./wallet
+DB_USERNAME=FULLSTACK_USER
+DB_PASSWORD=tu_contraseña_aquí
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.database-platform=org.hibernate.dialect.OracleDialect
+
+spring.sql.init.mode=never
