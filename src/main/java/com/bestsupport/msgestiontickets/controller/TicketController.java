@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bestsupport.msgestiontickets.dto.TicketDTO;
 import com.bestsupport.msgestiontickets.dto.TicketDTOConverter;
+import com.bestsupport.msgestiontickets.model.Status;
 import com.bestsupport.msgestiontickets.model.Ticket;
 import com.bestsupport.msgestiontickets.service.TicketService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PutMapping;
-
 
 @RestController
 @RequestMapping("/api/v1/tickets")
@@ -33,7 +33,7 @@ public class TicketController {
 
     private static final Logger logger = LoggerFactory.getLogger(TicketController.class);
 
-    @GetMapping("/status")
+    @GetMapping("/server")
     public ResponseEntity<String> getStatus() {
         return ResponseEntity.ok("Ticket Service is running");
     }
@@ -65,6 +65,22 @@ public class TicketController {
         return ResponseEntity.ok(ticketDTO);
     }
 
+    @GetMapping("/status/{status}")
+    public ResponseEntity<List<TicketDTO>> getTicketsByStatus(@PathVariable String status) {
+
+        try {
+            Status.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+        
+        List<Ticket> tickets = ticketService.getTicketsByStatus(Status.valueOf(status.toUpperCase()));
+        if (tickets.isEmpty())
+            return ResponseEntity.noContent().build();
+        List<TicketDTO> dtos = tickets.stream().map(ticketDTOConverter::convert).toList();
+        return ResponseEntity.ok(dtos);
+    }
+
     @PostMapping()
     public ResponseEntity<TicketDTO> createTicket(@RequestBody TicketDTO ticketDTO) {
 
@@ -73,7 +89,7 @@ public class TicketController {
         Ticket ticket = ticketDTOConverter.convertToEntity(ticketDTO);
         Ticket createdTicket = ticketService.createTicket(ticket);
         TicketDTO createdTicketDTO = ticketDTOConverter.convert(createdTicket);
-        return ResponseEntity.created(null).body(createdTicketDTO);
+        return ResponseEntity.status(201).body(createdTicketDTO);
     }
 
     @PutMapping("/{id}")

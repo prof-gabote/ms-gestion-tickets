@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.bestsupport.msgestiontickets.model.Status;
 import com.bestsupport.msgestiontickets.model.Ticket;
 import com.bestsupport.msgestiontickets.repository.TicketRepository;
 
@@ -41,6 +42,10 @@ public class TicketService {
             return true;
         }
         return false;
+    }
+
+    public List<Ticket> getTicketsByStatus(Status valueOf) {
+        return ticketRepository.findByStatus(valueOf);
     }
 
 }
