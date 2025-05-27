@@ -33,7 +33,7 @@ public class TicketController {
 
     private static final Logger logger = LoggerFactory.getLogger(TicketController.class);
 
-    @GetMapping("/status")
+    @GetMapping("/server")
     public ResponseEntity<String> getStatus() {
         return ResponseEntity.ok("Ticket Service is running");
     }
