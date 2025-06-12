@@ -1,8 +1,6 @@
 spring.application.name=ms-gestion-tickets
 
-server.port=8080
-
-spring.profile.active=dev
+server.port=8081
 
 spring.output.ansi.enabled=ALWAYS
 
@@ -25,3 +23,8 @@ spring.jpa.properties.hibernate.format_sql=true
 spring.jpa.database-platform=org.hibernate.dialect.OracleDialect
 
 spring.sql.init.mode=never
+
+#SWAGGER
+springdoc.api-docs.enabled=true
+springdoc.swagger-ui.enabled=true
+springdoc.swagger-ui.path=/doc/swagger-ui.html
