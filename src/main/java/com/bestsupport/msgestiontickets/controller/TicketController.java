@@ -1,8 +1,10 @@
 package com.bestsupport.msgestiontickets.controller;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
+import com.bestsupport.msgestiontickets.assemblers.TicketAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -13,6 +15,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +28,11 @@ import com.bestsupport.msgestiontickets.service.TicketService;
 
 import lombok.RequiredArgsConstructor;
 
+import javax.swing.text.html.parser.Entity;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RestController
 @RequestMapping("/api/v1/tickets")
 @RequiredArgsConstructor
@@ -32,6 +41,7 @@ public class TicketController {
 
     private final TicketService ticketService;
     private final TicketDTOConverter ticketDTOConverter;
+    private final TicketAssembler ticketAssembler;
 
     private static final Logger logger = LoggerFactory.getLogger(TicketController.class);
 
@@ -64,13 +74,24 @@ public class TicketController {
                             description = "No hay tickets registrados")
             }
     )
-    public ResponseEntity<List<TicketDTO>> getAllTickets() {
+    public ResponseEntity<CollectionModel<EntityModel<TicketDTO>>> getAllTickets() {
         List<Ticket> tickets = ticketService.getAllTickets();
-        List<TicketDTO> ticketDTOs = new ArrayList<>();
-        for (Ticket ticket : tickets) {
-            ticketDTOs.add(ticketDTOConverter.convert(ticket));
+        if (tickets.isEmpty()) {
+            return ResponseEntity.noContent().build();
         }
-        return ticketDTOs.isEmpty() ? ResponseEntity.noContent().build() : ResponseEntity.ok(ticketDTOs);
+
+        List<EntityModel<TicketDTO>> ticketModels = new ArrayList<>();
+        for (Ticket ticket : tickets) {
+            TicketDTO dto = ticketDTOConverter.convert(ticket);
+            if (dto != null) {
+                ticketModels.add(ticketAssembler.toModel(dto));
+            }
+        }
+
+        return ResponseEntity.ok(CollectionModel.of(
+                ticketModels,
+                linkTo(methodOn(TicketController.class).getAllTickets()).withSelfRel()
+        ));
     }
 
     @GetMapping("/{id}")
@@ -87,10 +108,18 @@ public class TicketController {
             }
     )
     @Parameter(in = ParameterIn.PATH, name = "id", description = "Ticket ID")
-    public ResponseEntity<TicketDTO> getTicketById(@PathVariable Long id) {
+    public ResponseEntity<EntityModel<TicketDTO>> getTicketById(@PathVariable Long id) {
         Ticket ticket = ticketService.getTicketById(id);
-        if (ticket == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(ticketDTOConverter.convert(ticket));
+        if (ticket == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        TicketDTO dto = ticketDTOConverter.convert(ticket);
+        if (dto == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok(ticketAssembler.toModel(dto));
     }
 
     @GetMapping("/status/{status}")
@@ -130,11 +159,14 @@ public class TicketController {
                                     schema = @Schema(implementation = TicketDTO.class)))
             }
     )
-    public ResponseEntity<TicketDTO> createTicket(@RequestBody TicketDTO ticketDTO) {
+    public ResponseEntity<EntityModel<TicketDTO>> createTicket(@RequestBody TicketDTO ticketDTO) {
         logger.info("Creating ticket with: {}", ticketDTO);
-        Ticket ticket = ticketDTOConverter.convertToEntity(ticketDTO);
-        Ticket createdTicket = ticketService.createTicket(ticket);
-        return ResponseEntity.status(201).body(ticketDTOConverter.convert(createdTicket));
+        Ticket entity = ticketDTOConverter.convertToEntity(ticketDTO);
+        Ticket saved = ticketService.createTicket(entity);
+        TicketDTO dto = ticketDTOConverter.convert(saved);
+        return ResponseEntity
+                .created(linkTo(methodOn(TicketController.class).getTicketById(saved.getId())).toUri())
+                .body(ticketAssembler.toModel(dto));
     }
 
     @PutMapping("/{id}")
